@@ -1,43 +1,38 @@
 #include <stdio.h>
-using namespace std;
-
-//
 
 struct point
 {
-    int x, y;
+    double x, y;
     num;
 };
 
 struct Cluster
 {
-    //size of cluster
+    //number of cluster
     int n;
-    point clu [n];
+    int a;
+    // number of elements in cluster
+    struct point [a] clu;
 };
 
 struct Centroid
 {
-    point cen [100];  //n determines the size of this array.
+    // centroid is of point data type
+    struct point cen;
 }
+
 //generates centroid
-point *Centroid(cluster * cluster, int num_data_points)
+struct point Centroid (struct point clu[int n], int n)
 {
-    int size, a;
-    scanf ("%i", &size);
-    double centroid [size];
-    int num_data_points, num_clusters;
 
     //dividing the cluster's data points by the number of data points in the cluster
-    for (int i = 0; i < num_clusters; i++;)
+    for (int i = 0; i < n; i++;)
     {
-        
-        Centroid.x += cluster[i].x; 
+        cen.point.x += cluster[i].x; 
         Centroid.y += cluster[i].y;
     } 
     centroid.x /= cluster.n; 
     centroid.y /= cluster.n;
     
     return centroid;
-
 };
