@@ -10,7 +10,7 @@ struct Cluster
 {
     //number of cluster
     int n;
-    int a;
+    int size;
     // number of elements in cluster
     struct point *clu;
 };
@@ -22,19 +22,22 @@ struct Centroid
 }
 
 //generates centroid
-struct point Centroid (struct point *cluster, struct point cen, int n)
+struct point Centroid (struct point *cluster, struct point cen, int n, int num)
 {
-
     //dividing the cluster's data points by the number of data points in the cluster
     for (int i = 0; i < n; i++)
     {
-        cen.x += cluster[i].x;
-        cen.y += cluster[i].y;
-    } 
-
-    //work in progress
-    cen.x /= malloc_size(*cluster).n; 
-    cen.y /= cluster.n;
+        for (int j = 0; j < num; j++)
+        {
+            cen.x += cluster[i].x;
+            cen.y += cluster[i].y;
+        }
+        struct point *cluster[i] = new int temp1[num];
+        struct point *cluster[i] = new int temp2[num];
+        cen.x /= sizeOf.(temp1);
+        cen.y /= sizeOf.(temp2);
+    }
+    
     
     return cen;
 };
