@@ -1,6 +1,9 @@
-#include<stdio.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
 
-struct point{  //Place holder for datastructure.
+typedef struct point{  //Place holder for datastructure.
 	/*centroids are double values so I feel
 	  it would be simpiler to record all points
 	  as doubles rather than undergo in conversions
@@ -9,106 +12,159 @@ struct point{  //Place holder for datastructure.
 	  so this is just future proofing on multiple fronts.*/
 	double x;
 	double y;
-}
+} Point;
 
-struct cluster{
+typedef struct cluster{
 	/*This will act as a list of points.
 	  It will also keep track of how many
 	  points are in a cluster.
 	  */
 	int n; //Number of elements determined during randCluster and tightenCluster.
-	point[] cluster;
-}
+	struct point *c;
+} Cluster;
 
 //point initializer
-point init_point(int x, int y);
+struct point init_point(double x, double y);
 
 //ensure unique elements are picked
-bool is_unique(int[] past_pick, pick);
+bool is_unique(int *past_pick, int pick, int n);
 
 //cluster initializer
-cluster init_cluster(point[] D, int n);
+struct cluster init_cluster(struct point *D, int n);
 
 //Random Cluster function
-cluster[] rand_Cluster(point[] D, int k);
+struct cluster* rand_Cluster(struct point *D, int n, int k);
 
 //print cluster
-void print_cluster(cluster[] C);
+void print_cluster(struct cluster *C, int k);
 
-main(void){
+//print point support function for print_cluster
+void print_point(struct point *c);
+
+int main(void){
+	time_t t;
+	srand((unsigned)time(&t));
 	int n = 8, k = 3;
-	int x[] = [2, 2, 8, 5, 7, 6, 1, 4];
-	int y[] = [10, 5, 4, 8, 5, 4, 2, 9];
-	point D[n];
+	double x[8] = {2, 2, 8, 5, 7, 6, 1, 4};
+	double y[8] = {10, 5, 4, 8, 5, 4, 2, 9};
+	struct point D[n];
 
-	for(int i, i <= n, i++){
+	printf("I've started.\n");
+
+	for(int i = 0; i < n; i++){
 		D[i] = init_point(x[i], y[i]);
 	}
 
-	C = rand_Cluster(D);
+	struct cluster* C = calloc(k, sizeof(Cluster));
 
-	print_cluster(C);
+	C = rand_Cluster(D, n, k);
+
+	print_cluster(C, k);
 
 	return 0;
 }
 
 //point initializer
-point init_point(int x, int y){
-	point p = {1, 0};
+struct point init_point(double x, double y){
+	struct point p = {x, y};
 	return p;
 }
 
-//cluster initializer
-cluster init_cluster(point[] D, int n){
-	point c[n];
+//cluster initializer I don't know what this is for.
+struct cluster init_cluster(struct point *D, int n){//This function takes a list of points and the size of that list
+	struct point c[n];
 	for(int i = 0; i <= n; i++){
 		c[i] = D[i];
 	}
-	return {n, c};
+	struct cluster Ci= {n, c};
+	return Ci;
 }
 
 //Random Cluster function
-cluster[] rand_Cluster(point[] D, int k){
-	int n = sizeof(D);
+struct cluster* rand_Cluster(struct point *D, int n, int k){
 	int hm = 0; //how many?
 	int lower = 2; //Gives the lower amount of elements that can be assigned to a cluster.
-	int last_picked[n], v = 0;  //Used to insure elements in cluster are distinct.
-	cluster clust[k]; //Return value
-	for(int l = 0, l <= k, l++){
-		hm = (rand() % (n-hm));   //How many elements in the cluster
-		for(int m = 0, m <= hm, m++){  //Creates array used 
-			point temp[hm];       //The point array that will be passed in init_cluster
-			int pick = (rand() % n)
-			while is_unique(pastpicked, pick){
-				pick = (rand() % n);
-			}
-			temp[m] = D[pick];
-			last_picked[v] = pick;
+	int *last_picked, v = 0;  //Used to insure elements in cluster are distinct.
+	struct cluster *clust = calloc(k, sizeof(Cluster)); //Return value
+	struct point *temp; //The point array that will be passed in init_cluster
+
+	printf("v = %d\n", v);
+
+	for(int l = 0; l < k; l++){
+
+		printf("n = %d\n", n);
+		printf("l = %d\n", l);
+
+		int whatleft = n - hm;
+
+		hm = (rand() % (whatleft-lower+1))+lower;   //How many elements in the cluster
+
+		for(int m = 0; m <= hm; m++){  //Creates array used
+			
+			
+			temp = calloc(hm, sizeof(Point));
+
+			int pick = rand() % n;
+
+			printf("pick = %d\n", pick);
+			printf("Am I stuck here?\n");
+
+			while(is_unique(last_picked, pick, n) || (pick > n)) { pick = (rand()%n); }
+
+			printf("No\n");
+
+			//print_point(D+pick);
+
+			*(temp+m) = *(D+pick);
+			printf("I just gave temp a value from data points\n");
+			//print_point(temp+m);
+			printf("v = %d\n");
+			*(last_picked+v) = pick;
+			printf("Just updated list.");
 			v += 1;
 		}
-		clust[l] = init_cluster(temp, hm);
+
+
+		struct cluster a = {hm, temp};
+		printf("I made it here.");
+		*(clust + l) = a;
+		free(temp);
+		printf("Did I stop here?\n");
+		temp = NULL;
+		printf("No I made it here\n");
+		
 
 	}
+
+	printf("Finished creating cluster\n");
 	return clust;
 }
 
 //ensure unique elements are picked
-bool is_unique(int[] past_pick, pick){
-	int n = sizeof(past_pick);
-	for(int i; i <= n; i++){
-		if(pick == past_pick[i]){
-			return false;
+bool is_unique(int *past_pick, int pick, int n){
+	bool Unique = false;
+
+	for(int i = 0; i <= n; i++){
+		if(pick == *(past_pick+i) ){
+			Unique = true;
 		}
 	}
-	return true;
+	return Unique;
 }
 
 //print cluster
-void print_cluster(cluster[] C){
-	for(int i = 0; i <= sizeof(C); i++){
-		for(int l = 0; l <= C.n; l++){
-			printf("(%d, %d), ", *C[i].(cluster+l).x, *C[i].(cluster+l).y);
+void print_cluster(struct cluster* C, int k){
+	for(int i = 0; i <= k; i++){
+		printf("cluster %d: ", i);
+		for(int l = 0; l <= C->n; l++){
+			print_point(C[i].c+l);
 		}
+		printf("\n");
 	}
 	printf("\n");
+}
+
+void print_point(struct point *c){
+	struct point a = *c;
+	printf("(%lf, %lf), ", a.x, a.y);
 }
