@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 public void Cluster()
     {
       // init clustering[] and means[][] 
