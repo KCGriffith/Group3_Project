@@ -3,39 +3,35 @@
 struct point
 {
     double x, y;
-    num;
 };
 
-struct Cluster
+struct point centroid(struct point c[], int n)
 {
-    //number of cluster
-    int n;
-    int size;
-    // number of elements in cluster
-    struct point *clu;
-};
-
-struct Centroid
-{
-    // centroid is of point data type as it would contain x and y.
-    struct point *cen;
-}
-
-//generates centroid
-point Centroid (struct point *cluster; struct point cen; int n; int num)
-{
-    //dividing the cluster's data points by the number of data points in the cluster
-    for (int i = 0; i < n; i++)
+    struct point cen;
+    cen.x = 0, cen.y = 0;
+    for (int j = 0; j < n ; j++)
     {
-        for (int j = 0; j < num; j++)
-        {
-            cen.x += cluster[i].x;
-            cen.y += cluster[i].y;
-        }
-        struct point *cluster[i] = new point temp1[num];
-        struct point *cluster[i] = new point temp2[num];
-        cen.x /= sizeOf.(temp1);
-        cen.y /= sizeOf.(temp2);
+        cen.x += c[j].x;
+        cen.y += c[j].y;
     }
+    cen.x = cen.x / n;
+    cen.y = cen.y / n;
+    
     return cen;
-};
+}
+int main(void)
+{
+    int size;
+    printf("Size of cluster\n");
+    scanf("%d", &size);
+    struct point c[size];
+    for (int i = 0; i < size; i++)
+    {
+        printf("Enter x and y\n");
+        scanf("%lf %lf", &c[i].x, &c[i].y);
+    }
+    struct point cen;
+    cen = centroid (c, size);
+    printf("The centroid of cluster is (%.2lf, %.2lf) \n" , cen.x, cen.y);
+    return 0;
+}
