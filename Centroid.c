@@ -1,24 +1,35 @@
 #include <stdio.h>
 
+// point has x and y component
 struct point
 {
     double x, y;
 };
 
+centroid function to calculate centroid
 struct point centroid(struct point c[], int n)
 {
+    //centroid as a point
     struct point cen;
+
+    //initialize centroid
     cen.x = 0, cen.y = 0;
+
     for (int j = 0; j < n ; j++)
     {
         cen.x += c[j].x;
         cen.y += c[j].y;
     }
+
+    //average of all the data points
     cen.x = cen.x / n;
     cen.y = cen.y / n;
     
+    //return centroid
     return cen;
 }
+
+//main to test centroid function
 int main(void)
 {
     int size;
