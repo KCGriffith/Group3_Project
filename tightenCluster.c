@@ -93,21 +93,21 @@ struct UpdateClustering(int[] clustering,
     
     //test Euclidean function
 int main() {
-    double centroid;
+    double *centroid;
         int size;
-        int index;
+        int i;
         printf(" Enter The size of the array \n");
         scanf("%d",&size);
-        dynArry  = (int *)malloc(size * sizeof(int));
+        centroid  = (double *)malloc(size * sizeof(double));
         printf("Assigning the values using index \n");
-        for(index = 0; index < size; index++)
+        for(i = 0; i < size; i++)
         {
-                *(dynArry + index) = 4000 + index;
+                *(centroid + i) = 4000 + i;
         }
 
         /* Printing the array using Index */
-        for(index = 0; index < size; index++)
+        for(i = 0; i < size; i++)
         {
-                printf(" dynArry[%d] = %d\n",index,*(dynArry + index));
+                printf(" centroid[%d] = %f\n",i,*(centroid + i));
         }
 }
