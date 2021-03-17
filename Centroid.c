@@ -6,8 +6,8 @@ struct point
     double x, y;
 };
 
-centroid function to calculate centroid
-struct point centroid(struct point c[], int n)
+//centroid function to calculate centroid
+struct point centroid(struct point *c [], int n)
 {
     //centroid as a point
     struct point cen;
@@ -17,8 +17,8 @@ struct point centroid(struct point c[], int n)
 
     for (int j = 0; j < n ; j++)
     {
-        cen.x += c[j].x;
-        cen.y += c[j].y;
+        cen.x += *(c[j].x);
+        cen.y += *(c[j].y);
     }
 
     //average of all the data points
