@@ -102,7 +102,7 @@ int main() {
         printf("Assigning the values using index \n");
         for(i = 0; i < size; i++)
         {
-                *(centroid + i) = 4000 + i;
+                *(centroid + i) = 0 + i;
         }
 
         /* Printing the array using Index */
