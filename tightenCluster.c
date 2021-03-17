@@ -7,7 +7,6 @@ struct point
     double y;
 }
 
-struct mean 
 }
 struct EucDistance(double[] item, double[] mean)
     {
