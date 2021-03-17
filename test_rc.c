@@ -23,6 +23,10 @@ typedef struct cluster{
 	struct point *c;
 } Cluster;
 
+//if i have array of struck cluster C[k] and I fill in the values for all k clusters
+//then C[0].n != C[1].n 
+//If I edit C[0] then it won't change C[1]
+
 //point initializer
 struct point init_point(double x, double y);
 
@@ -47,15 +51,13 @@ int main(void){
 	int n = 8, k = 3;
 	double x[8] = {2, 2, 8, 5, 7, 6, 1, 4};
 	double y[8] = {10, 5, 4, 8, 5, 4, 2, 9};
-	struct point D[n];
-
-	printf("I've started.\n");
+	struct point *D = calloc(n, sizeof(Point));
 
 	for(int i = 0; i < n; i++){
-		D[i] = init_point(x[i], y[i]);
+		*(D+i) = init_point(x[i], y[i]);
 	}
 
-	struct cluster* C = calloc(k, sizeof(Cluster));
+	struct cluster *C = malloc(k * sizeof(Cluster));
 
 	C = rand_Cluster(D, n, k);
 
@@ -66,77 +68,95 @@ int main(void){
 
 //point initializer
 struct point init_point(double x, double y){
-	struct point p = {x, y};
-	return p;
+	return (Point) {x, y};
 }
 
 //cluster initializer I don't know what this is for.
-struct cluster init_cluster(struct point *D, int n){//This function takes a list of points and the size of that list
-	struct point c[n];
-	for(int i = 0; i <= n; i++){
-		c[i] = D[i];
-	}
-	struct cluster Ci= {n, c};
-	return Ci;
+struct cluster init_cluster(struct point *D, int n){
+	return (Cluster) {n, D};
 }
 
 //Random Cluster function
 struct cluster* rand_Cluster(struct point *D, int n, int k){
-	int hm = 0; //how many?
-	int lower = 2; //Gives the lower amount of elements that can be assigned to a cluster.
-	int *last_picked, v = 0;  //Used to insure elements in cluster are distinct.
-	struct cluster *clust = calloc(k, sizeof(Cluster)); //Return value
-	struct point *temp; //The point array that will be passed in init_cluster
+	int hm = 0, lower = 1, whatleft, *last_picked = calloc(n, sizeof(n)), v = 0, pick;  //These are the integer values
+	struct cluster *clust = malloc(k * sizeof(Cluster)), tclust[k]; //These are the cluster variables
+	struct point *temp = calloc(n, sizeof(Point)); //these are the point variables
 
-	printf("v = %d\n", v);
+	for(int z = 0; z < n; z++){  
+		//An index cannot be negative so all of the 
+		//initial values for last_picked needs to be set to a negative value.
+		*(last_picked+z) = -1;
+	}
+
+	//We need to know how many data points are left
+	//By the time we are ready to initialize the final cluster.
+	whatleft = n;
 
 	for(int l = 0; l < k; l++){
 
-		printf("n = %d\n", n);
-		printf("l = %d\n", l);
+		//Utilizing pointer arithmatic to make sure that 
+		//temp is not pointing at allocated memory that has a value.
+		temp += hm;
 
-		int whatleft = n - hm;
+		//hm = 0 when l = 0.
+		//When l != 0 then hm has some non zero value.
+		//We take the difference of whatsleft and hm
+		//Gives an accurate assement of how many 
+		//Data points are left.
+		whatleft = whatleft - hm;
 
-		hm = (rand() % (whatleft-lower+1))+lower;   //How many elements in the cluster
+		//Upper is boundary value between indexes.
+		int upper = (n-1) - hm;
 
-		for(int m = 0; m <= hm; m++){  //Creates array used
-			
-			
-			temp = calloc(hm, sizeof(Point));
-
-			int pick = rand() % n;
-
-			printf("pick = %d\n", pick);
-			printf("Am I stuck here?\n");
-
-			while(is_unique(last_picked, pick, n) || (pick > n)) { pick = (rand()%n); }
-
-			printf("No\n");
-
-			//print_point(D+pick);
-
-			*(temp+m) = *(D+pick);
-			printf("I just gave temp a value from data points\n");
-			//print_point(temp+m);
-			printf("v = %d\n");
-			*(last_picked+v) = pick;
-			printf("Just updated list.");
-			v += 1;
+		while(true){
+			//It stands that the expression upper > whatleft can't be true.
+			//I know the way I wrote it is weird but it made sense at the time.
+			//If the expression mentioned earlier is true then we need to decrement upper
+			//If we don't do this things go wrong understandably.
+			if(whatleft - upper <= 0){
+				upper -= 1;
+			} else {break;}
 		}
 
+		//If we are at the last cluster then we need
+		//To assign it with whatever data points are left
+		//Otherwise we take a random value.
+		if(l == k-1){
+			hm = whatleft;
+		} else {
+			hm = (rand() % (upper-lower+1))+lower;   //How many elements in the cluster
+		}
 
-		struct cluster a = {hm, temp};
-		printf("I made it here.");
-		*(clust + l) = a;
-		free(temp);
-		printf("Did I stop here?\n");
-		temp = NULL;
-		printf("No I made it here\n");
-		
+		//Now we need to pick what data points
+		//Are assigned to the list of data points that
+		//Goes to the current cluster.
+		for(int m = 0; m < hm; m++){  
+
+			//We are going to initially pick a random value.
+			pick = rand() % n;
+
+			while(is_unique(last_picked, pick, n) || (pick > n)) { pick = (rand()%n); } //If the index is not unique we take another random index until we find a unique 
+			//We want temp at m to take the value from D at pick.
+			*(temp+m) = *(D+pick);
+			//We now add pick to the array of last picked.
+			*(last_picked+v) = pick;
+			v += 1;
+
+		}
+
+		//Now we initialize the cluster at l within the array.
+		tclust[l] = init_cluster(temp, hm);
 
 	}
 
-	printf("Finished creating cluster\n");
+	//Here we are just pointing whats in the array into the dynamic array.
+	for(int i = 0; i < k; i++){
+		*(clust+i) = tclust[i];
+	}
+	//The reason I have two different types of array has to do with the trouble I was
+	//having with pointers.
+
+
 	return clust;
 }
 
@@ -153,11 +173,13 @@ bool is_unique(int *past_pick, int pick, int n){
 }
 
 //print cluster
-void print_cluster(struct cluster* C, int k){
-	for(int i = 0; i <= k; i++){
+void print_cluster(struct cluster *C, int k){
+	//It turns out that all my problems stemed from this function.
+	printf("I got here\n");
+	for(int i = 0; i < k; i++){
 		printf("cluster %d: ", i);
-		for(int l = 0; l <= C->n; l++){
-			print_point(C[i].c+l);
+		for(int l = 0; l < (C+i)->n; l++){
+			print_point((C+i)->c+l);
 		}
 		printf("\n");
 	}
@@ -165,6 +187,5 @@ void print_cluster(struct cluster* C, int k){
 }
 
 void print_point(struct point *c){
-	struct point a = *c;
-	printf("(%lf, %lf), ", a.x, a.y);
+	printf("(%lf, %lf), ", c->x, c->y);
 }
