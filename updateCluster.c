@@ -1,57 +1,76 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#incluce <stdbool.h>
+#include <stdbool.h>
 
-typedef struct point{  //Place holder for datastructure.
-	/*centroids are double values so I feel
-	  it would be simpiler to record all points
-	  as doubles rather than undergo in conversions
-	  Also I haven't looked at the breast cancer dataset
-	  and there might be double values there as well
-	  so this is just future proofing on multiple fronts.*/
+typedef struct point{
 	double x;
 	double y;
-} Point;  //(x, y) <-- That is a point.
+} point;  //(x, y) <-- That is a point.
 
 typedef struct cluster{
-	/*This will act as a list of points.
-	  It will also keep track of how many
-	  points are in a cluster.
-	  */
 	int n; //Number of elements determined during randCluster and tightenCluster.
 	struct point *c;
-} Cluster;  //A cluster is a list of points {(x,y), (x,y)} For example and keeps trak of how many data points it holds which is n.  In this example n = 2.
+} cluster;
 
-float centroidPoint1(float aa, float bb)
+struct point pointer(struct point *c [], int n)
 {
-    float centroidx = aa;
-    float centroidy = bb;
+    //point
+    struct point pt;
+
+    //initialize point
+    pt.x = 0, pt.y = 0;
+
+    for (int j = 0; j < n ; j++)
+    {
+        pt.x += (c[j]->x);
+        pt.y += (c[j]->y);
+    }
+
+    //average of all the data points
+    pt.x = pt.x / n;
+    pt.y = pt.y / n;
+    
+    //return centroid
+    return pt;
 }
-float centroidPoint2(float cc, float dd)
-{
-    float centroidx = cc;
-    float centroidy = dd;
+
+double pointSummation(point *A, point *B){
+    return pow(2, (A-B)) + pow(2, (A-B));
 }
-float distance_calculator1(float aa, float bb, float x1, float y1)
-{
-    float distance1;
-    distance1 = sqrt((aa - bb) * (aa - bb) + (x1 - y1) * (x1 - y1));
-    return distance1;
+
+double distanceCalculator(point *A, point *B){
+    return sqrt(pointSummation(A, B));
 }
-float distance_calculator2(float aa, float bb, float x2, float y2) 
-{
-    float distance2;
-     distance2 = sqrt((aa - bb) * (aa - bb) + (x2 - y2) * (x2 - y2));
-    return distance2;
+
+double sumCluster(cluster* C, point *cent){ //cent is our centroid  
+    double total; //It is the value to be returned. 
+    for(int l = 0; l < C->n; l++){
+        total += pow(2, distanceCalculator((C+l)->c, cent));
+    }
+    return total;
 }
-float distance_calculator3(float aa, float bb, float x3, float y3)
-{
-    float distance3;
-     distance3 = sqrt((aa - bb) * (aa - bb) + (x3 - y3) * (x3 - y3));
-    return distance3;
+
+double eCalculator(cluster *C, point *c, int k){ 
+    double Total; 
+    for(int i = 0; i < k; i++){
+        Total += sumCluster(C+i, c+i);
+    }
+    return Total; 
 }
-struct point UpdateClustering(int clustering[],
+int main() {
+    int size;
+    printf("Insert the number of points: \n");
+    scanf("%d", &size);
+    struct point c[size];
+    for (int i = 0; i < size; i++)
+    {
+        printf("Enter x and y\n");
+        scanf("%lf %lf", &c[i].x, &c[i].y);
+    }
+   
+}
+ /*struct point UpdateClustering(int clustering[],
       double[] data[][], double[] means[][])
     {
       // update existing cluster clustering using data and means
@@ -107,7 +126,7 @@ struct cluster init_cluster(struct point *D, int n){
 	return (Cluster) {n, D};
 }
 
-int main()
+*int main()
 {
     float result1,result2,result3,aa,bb, a, b, c, d, e, f;
     
@@ -134,7 +153,7 @@ int main()
     result1 = distance_calculator1(aa, bb, a, b);
     result2 = distance_calculator2(aa, bb, c, d);
     result3 = distance_calculator3(aa, bb, e, f);
-    printf("\nDistance between Points A, B, and C: %f %f %f \n", result1, result2, result3);
+    printf("\nDistance between Points A, B, and C: %f %f %f \n", result1, result2, result3);*/
     
     int n = 8, k = 3, hm = 0; //hm keeps track of how many data point were assigned to a cluster.
 	double x[8] = {2, 2, 8, 5, 7, 6, 1, 4}; //These are test values meant to be turned into data points
