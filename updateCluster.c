@@ -58,6 +58,44 @@ double eCalculator(cluster *C, point *c, int k){
     }
     return Total; 
 }
+//---------------------------------------------------------------------------------------------------------
+struct minimum{
+    struct point chosen; 
+    int k_index; //Keeps track of starting cluster. 
+    int k_target; 
+    double ed; //ed stands for Euclidean distance. 
+} 
+
+void Minimum_find(cluster* C, point* cent, struct minimum min, int k, int currentClust){
+    for(int g = 0; g < C->n; g++){
+        for(int v = 0; v < k; v++){
+            Candidate = distanceCalculator(C->c[g], cent[k]);
+            if(min == null && v != currentClust){
+                min = {C->c[g], currentClust, v, Candidate};
+            }
+            else if(min.ed > Candidate && v != currentClust){
+                min = {C->c[g], currentClust, v, Candidate};
+                
+            }
+        }
+    }
+}
+
+struct minimum Minimize(cluster* C, point* cent, int k){
+    struct minimum min = NULL; 
+    for(int l = 0; l < k; l++){
+        Minimum_find(C+l, cent, min, k, l);
+    }
+    return min;
+}
+
+void TightenCluster(cluster* C, point* cent, int k){
+    struct minimum min = Minimize(C, cent, k); 
+    int k_index = min.k_index; 
+    int k_target = min.k_target; 
+    point_reassignment(*(C+k_index), *(C+k_target), min.chosen);
+}
+//-------------------------------------------------------------------------------------------------
 int main() {
     int size;
     printf("Insert the number of points: \n");
