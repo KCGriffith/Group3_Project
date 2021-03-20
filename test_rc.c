@@ -45,6 +45,12 @@ void print_cluster(struct cluster *C, int k);
 //print point support function for print_cluster
 void print_point(struct point *c);
 
+
+//Takes a point and assigns it to a new cluster.
+void point_reassignment(struct cluster start, struct cluster target, struct point chosen);
+
+bool compare_points(struct point a, struct point b);
+
 int main(void){
 	time_t t;
 	srand((unsigned)time(&t));
@@ -63,11 +69,33 @@ int main(void){
 
 	print_cluster(C, k);
 
+	struct point find = {2, 10};
+	int i = 0, l = 0, v = 0;
+
+	for(i = 0; i < k; i++){
+		for(l = 0; l < (C+i)->n; l++);
+			struct point temp = (C+i)->c[l];
+			if(compare_points(temp, find)){
+				break;
+			}
+	}
+
+	if(i == k-1){
+		v = i - 1;
+	} else {
+		v = i + 1;
+	}
+
+	point_reassignment(*(C+i), *(C+v), find);
+
+	print_cluster(C, k);
+
 	return 0;
 }
 
 //point initializer
 struct point init_point(double x, double y){
+	printf("I did try to init the poin\n");
 	return (Point) {x, y};
 }
 
@@ -188,4 +216,47 @@ void print_cluster(struct cluster *C, int k){
 
 void print_point(struct point *c){
 	printf("(%lf, %lf), ", c->x, c->y);
+}
+
+//Takes a point and assigns it to a new cluster.
+void point_reassignment(struct cluster start, struct cluster target, struct point chosen){
+	printf("I made it here.\n");
+	printf("I'm gonna try printing a point ");
+	print_point(&start.c[1]);
+	printf("Did it work?\n");
+	bool found = false;
+	//First we need to assign the point to the new cluster
+	target.n++;
+	int target_n = target.n;
+
+	target.c = realloc(target.c, sizeof(Point)*target_n);
+
+	//For simplicity sake we put chosen at the end of target cluster's list of points.
+
+	target.c[target_n-1] = init_point(chosen.x, chosen.y);
+
+	printf("I stoped here\n");
+
+	for(int i = 0; i < start.n; i++){
+		if(compare_points(start.c[i], chosen)){ //We found where the point is in the start cluster.
+			found = true;
+		}
+		if(found && i < start.n){
+			start.c[i] = start.c[i+1];
+		}
+	}
+
+	start.n--;
+	start.c = (struct point *) realloc(start.c, start.n);
+}
+
+bool compare_points(struct point a, struct point b)
+{
+    //Returns whether two points are equal.
+    if (a.x == b.x && a.y == b.y)
+        return true;
+    else
+    {
+        return false;
+    }
 }
