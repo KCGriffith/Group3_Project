@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <math.h>
 #include <time.h>
 
 typedef struct point{  //Place holder for datastructure.
@@ -36,7 +37,7 @@ bool is_unique(int *past_pick, int pick, int n);
 struct cluster init_cluster(struct point *D, int n);
 
 //kmeans algorithm...  I don't know if this is correct syntax but I'm just communicating a list of clusters is returned by this function.
-cluster[] kmeans(point[] D, int k);
+struct cluster* kmeans(Point* D, int n, int k);
 
 //Random Cluster function
 struct cluster* rand_Cluster(struct point *D, int n, int k);
@@ -48,20 +49,65 @@ void print_cluster(struct cluster *C, int k);
 void print_point(struct point *c);
 
 //Check to end kmean function.
-bool shouldhalt(struct point old_centroid[], struct point centroid[], int k)
+bool shouldHalt(struct point old_centroid[], struct point centroid[], int k);
+bool compare_points(struct point a, struct point b);
 
 //centroid function to calculate centroid
-struct point centroid(struct point *c[], int n);
+struct point get_centroid(struct point *c, int n);
 
+double pointSummation(Point *A, Point *B);
+
+double distanceCalculator(Point *A, Point *B);
+
+double sumCluster(Cluster* C, Point *cent);
+
+double eCalculator(Cluster *C, Point *c, int k);
+
+struct minimum{
+    struct point chosen; 
+    int k_index; //Keeps track of starting cluster. 
+    int k_target; 
+    double ed; //ed stands for Euclidean distance.
+};
+
+void Minimum_find(Cluster* C, Point* cent, struct minimum *min, int k, int currentClust);
+
+struct minimum Minimize(Cluster* C, Point* cent, int k);
+
+void tightenCluster(Cluster* C, Point* cent, int k);
 //Function to reassign elements
+void point_reassignment(struct cluster start, struct cluster target, struct point chosen){
+	printf("I made it here.\n");
+	printf("I'm gonna try printing a point ");
+	print_point(&start.c[1]);
+	printf("Did it work?\n");
+	bool found = false;
+	//First we need to assign the point to the new cluster
+	target.n++;
+	int target_n = target.n;
+	target.c = realloc(target.c, sizeof(Point)*target_n);
+	//For simplicity sake we put chosen at the end of target cluster's list of points.
 
-
-int main(void){
+	target.c[target_n-1] = init_point(chosen.x, chosen.y);
+	printf("I stoped here\n");
+	for(int i = 0; i < start.n; i++){
+		if(compare_points(start.c[i], chosen)){ //We found where the point is in the start cluster.
+			found = true;
+		}
+		if(found && i < start.n){
+			start.c[i] = start.c[i+1];
+		}
+	}
+	start.n--;
+	start.c = (struct point *) realloc(start.c, start.n);
+}
+int main(int argc, char *argv[])
+{
 	//For the time being ignore the fact C has to be initialized as a list.
 	//At least until the data structure is in place.
 	//int k, n = /*Input data's size*/;
 	//point D[n] = [initPoint(/*Input data*/)*n];
-	cluster result;
+	Cluster *result;
 	int n = 8, k = 3;
 	double x[8] = {2, 2, 8, 5, 7, 6, 1, 4};
 	double y[8] = {10, 5, 4, 8, 5, 4, 2, 9};
@@ -71,37 +117,38 @@ int main(void){
 	scanf("%d", &k);
 	printf("\n");
 
-	result = kmeans(D, k);
-
-	printf(/*We need to workout how to output results*/);
+	result = kmeans(D, n, k);
+	
+	print_cluster(result, k);
 
 	return 0;
 
 }
 
-struct cluster kmeans(struct point* D, int k){
+struct cluster* kmeans(struct point* D, int n, int k){
 	//Initializaition
-	struct cluster* C = rand_Cluster(D, k); //This creates the list of functions using the function I wrote.
+	struct cluster* C = rand_Cluster(D, n, k); //This creates the list of functions using the function I wrote.
 	struct point centroid[k]; //This initializes the centroid list.
 
 	for(int i = 0; i < k; i++){
-		centroids[i] = centroid((C+i)->c, (C+i)->n);
+		centroid[i] = get_centroid((C+i)->c, (C+i)->n);
 	}
 	
 	//Book Keeping
 	struct point old_centroids[k];
 
-	while(!shouldhalt(old_centroids, centorids)){
-
-		old_centroids = controids;
+	while(!shouldHalt(old_centroids, centroid, k)){
+        for(int i = 0; i < k; i++){
+            old_centroids[i] = centroid[i];
+        }
 
 		//Reassign objects to the cluster.
 
-		C = tighten_cluster(C, k);
+		tightenCluster(C, centroid, k);
 
 		//Update the cluster means
 		for(int i = 0; i < k; i++){
-			centroids[i] = centroid((C+i)->c, (C+i)->n);
+			centroid[i] = get_centroid((C+i)->c, (C+i)->n);
 		}
 
 	}
@@ -234,14 +281,14 @@ void print_point(struct point *c){
 }
 
 //Check to end kmean function.
-bool shouldhalt(struct point old_centroid[], struct point centroid[], int k)
+bool shouldHalt(struct point old_centroid[], struct point centroid[], int k)
 {
     int temp = 0;
     for (int i = 0; i < k; i++)
     {
         if (compare_points(old_centroid[i], centroid[i]))
         {
-            temp += 1
+            temp += 1;
         }
         else break;
     }
@@ -252,8 +299,7 @@ bool shouldhalt(struct point old_centroid[], struct point centroid[], int k)
 }
 
 //Used to compare individual points
-bool compare_points(struct point a, struct point b)
-{
+bool compare_points(struct point a, struct point b){
     //Returns whether two points are equal.
     if (a.x == b.x && a.y == b.y)
         return true;
@@ -264,18 +310,14 @@ bool compare_points(struct point a, struct point b)
 }
 
 //centroid function to calculate centroid
-struct point centroid(struct point* c, int n)
-{
+struct point get_centroid(struct point* c, int n){
     //centroid as a point
     struct point cen;
 	//@@ -17,8 +17,8 @@ struct point centroid(struct point c[], int n)
-
-    for (int j = 0; j < n ; j++)
-    {
-        cen.x += *(c+j)->x;
-        cen.y += *((c+j)->y);
+	for (int j = 0; j < n ; j++){
+        cen.x += (c+j)->x;
+        cen.y += ((c+j)->y);
     }
-
     //average of all the data points
     cen.x = cen.x / n;
     cen.y = cen.y / n;
@@ -284,3 +326,57 @@ struct point centroid(struct point* c, int n)
     return cen;
 }
 
+double pointSummation(Point *A, Point *B){
+    return pow(2, (A->x)-(B->x)) + pow(2, ((A->y)-(B->y)));
+}
+
+double distanceCalculator(Point *A, Point *B){
+    return sqrt(pointSummation(A, B));
+}
+
+double sumCluster(Cluster* C, Point *cent){ //cent is our centroid  
+    double total; //It is the value to be returned. 
+    for(int l = 0; l < C->n; l++){
+        total += pow(2, distanceCalculator((C+l)->c, cent));
+    }
+    return total;
+}
+
+double eCalculator(Cluster *C, Point *c, int k){ 
+    double Total; 
+    for(int i = 0; i < k; i++){
+        Total += sumCluster(C+i, c+i);
+    }
+    return Total; 
+}
+
+void Minimum_find(Cluster* C, Point* cent, struct minimum *min, int k, int currentClust){
+    double Candidate;
+    for(int g = 0; g < C->n; g++){
+        for(int v = 0; v < k; v++){
+            Candidate = distanceCalculator(&C->c[g], &cent[v]);
+            if(min == NULL && v != currentClust){
+                min = &(struct minimum){C->c[g], currentClust, v, Candidate};
+            }
+            else if(min->ed > Candidate && v != currentClust){
+                min = &(struct minimum){C->c[g], currentClust, v, Candidate};
+                
+            }
+        }
+    }
+}
+
+struct minimum Minimize(Cluster* C, Point* cent, int k){
+    struct minimum *min = NULL; 
+    for(int l = 0; l < k; l++){
+        Minimum_find(C+l, cent, min, k, l);
+    }
+    return *min;
+}
+
+void tightenCluster(Cluster* C, Point* cent, int k){
+    struct minimum min = Minimize(C, cent, k); 
+    int k_index = min.k_index; 
+    int k_target = min.k_target; 
+    point_reassignment(*(C+k_index), *(C+k_target), min.chosen);
+}
