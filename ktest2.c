@@ -7,15 +7,10 @@
 #include <math.h>
 #include <time.h>
 
-typedef struct point{  //Place holder for datastructure.
-	/*centroids are double values so I feel
-	  it would be simpiler to record all points
-	  as doubles rather than undergo in conversions
-	  Also I haven't looked at the breast cancer dataset
-	  and there might be double values there as well
-	  so this is just future proofing on multiple fronts.*/
-	double x;
-	double y;
+typedef struct point{
+    int id_num; 
+    double att[9];  //short for attributes. 
+    int lable; 
 } Point;
 
 typedef struct cluster{
@@ -35,7 +30,7 @@ typedef struct minimum{
 }Minimum;
 
 //point initializer
-struct point init_point(double x, double y);
+struct point init_point(int id_num, int att[], int lable);
 
 //ensure unique elements are picked
 bool is_unique(int *past_pick, int pick, int n);
@@ -64,8 +59,8 @@ void print_centroid(Point* cent, int k);
 bool shouldHalt(struct point old_centroid[], struct point centroid[], int k);
 bool compare_points(struct point a, struct point b);
 
-//centroid function to calculate centroid
-struct point get_centroid(struct point *c, int n);
+//centroid function to calculate centroid 
+struct point get_centroid(struct point* c, int n);
 
 double pointSummation(Point *A, Point *B);
 
@@ -149,8 +144,14 @@ struct cluster* kmeans(struct point* D, int n, int k){
 
 
 //point initializer
-struct point init_point(double x, double y){
-	return (Point) {x, y};
+struct point init_point(int id_num, double att[], int lable){
+    Point temp; 
+    temp.id_num = id_num;
+    for(int i = 0; i < 9; i++){
+        temp.att[i] = att[i];
+    }
+    temp.lable = lable;
+    return temp;
 }
 
 //cluster initializer I don't know what this is for.
@@ -269,9 +270,12 @@ void print_cluster(struct cluster *C, int k){
 	}
 	printf("\n");
 }
-
 void print_point(struct point *c){
-	printf("(%lf, %lf), ", c->x, c->y);
+    printf("(%d ", c->id_num);
+    for(int v = 0; v < 9; v++){
+        printf("%lf, ", c->att[v]);
+        printf("%d)", c->lable);
+    }
 }
 
 void print_centroid(Point* cent, int k){
@@ -283,13 +287,10 @@ void print_centroid(Point* cent, int k){
 }
 
 //Check to end kmean function.
-bool shouldHalt(struct point old_centroid[], struct point centroid[], int k)
-{
+bool shouldHalt(struct point old_centroid[], struct point centroid[], int k){
     int temp = 0;
-    for (int i = 0; i < k; i++)
-    {
-        if (compare_points(old_centroid[i], centroid[i]))
-        {
+    for (int i = 0; i < k; i++){
+        if (compare_points(old_centroid[i], centroid[i])){
             temp += 1;
         }
         else break;
@@ -303,34 +304,50 @@ bool shouldHalt(struct point old_centroid[], struct point centroid[], int k)
 //Used to compare individual points
 bool compare_points(struct point a, struct point b){
     //Returns whether two points are equal.
-    if (a.x == b.x && a.y == b.y)
-        return true;
-    else
-    {
-        return false;
-    }
+    for(int v = 0; v < 9; v++){
+        if (a.att[v] != b.att[v]){
+            return false;
+        }
+        return true; 
 }
-
 //centroid function to calculate centroid
-struct point get_centroid(struct point* c, int n){
-    //centroid as a point
+struct point get_centroid(struct point* c, int n){ 
+    //centroid as a point 
     struct point cen;
-	//@@ -17,8 +17,8 @@ struct point centroid(struct point c[], int n)
-	for (int j = 0; j < n ; j++){
-        cen.x += (c+j)->x;
-        cen.y += ((c+j)->y);
-    }
-    //average of all the data points
-    cen.x = cen.x / n;
-    cen.y = cen.y / n;
-    
-    //return centroid
-    return cen;
+    if(n == 1){
+        for(int v = 0; v < 9; v++){
+            cen.att[v] = c->att[v];
+        }
+        return cen;
+    } 
+    //@@ -17,8 +17,8 @@ struct point centroid(struct point c[], int n) 
+    //printf("We are iterating through %d elements.\n", n); 
+    for(int v = 0; v < 9; v++){
+            cen.att[v] = (c)->att[v];
+        }
+    for (int j = 0; j < n ; j++){
+        for(int v = 0; v < 9; v++){
+            cen.att[v] += (c+j)->att[v];
+        } 
+    } 
+    //average of all the data points 
+    for (int j = 0; j < n ; j++){
+        for(int v = 0; v < 9; v++){
+            cen.att[v] = cen.att[v]/n;
+        } 
+    } 
+    //return centroid 
+    return cen; 
 }
 
 double pointSummation(Point *A, Point *B){
-    return pow(2, (A->x)-(B->x)) + pow(2, ((A->y)-(B->y)));
-}
+    double total;
+    for(int v = 0; v < 9; v++){
+        double difference = (A->att[v]) - (B->att[v]);
+        total += pow(2, difference);
+    }
+    return total;
+} 
 
 double distanceCalculator(Point *A, Point *B){
     return sqrt(pointSummation(A, B));
@@ -400,13 +417,8 @@ Cluster* point_reassignment(Cluster* C, Point chosen, int start, int target, int
 	start_n = ((C+start)->n)-1;
 
 	/*printf("Former_start = %d\nFormer_target = %d\n", (C+start)->n, (C+target)->n);
-
-
-
 	printf("start_n = %d\ntarget_n= %d\n", start_n, target_n);
-
 	printf("start index: %d\nTarget index: %d\n", start, target);
-
 	printf("Here is chosen:");
 	print_point(&chosen);
 	printf("\n");*/
@@ -446,12 +458,10 @@ Cluster* point_reassignment(Cluster* C, Point chosen, int start, int target, int
 		}
 	}
 
-	
 	free(C);
 	C = (Cluster*)calloc(k, sizeof(Cluster));
 	for(int i = 0; i < k; i++){
 		*(C+i) = ctemp[i];
 	}
-
 	return C;
 }
