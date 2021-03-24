@@ -272,10 +272,11 @@ void print_cluster(struct cluster *C, int k){
 }
 void print_point(struct point *c){
     printf("(%d ", c->id_num);
-    for(int v = 0; v < 9; v++){
-        printf("%lf, ", c->att[v]);
-        printf("%d)", c->lable);
-    }
+    for(int v = 0; v < 9; v++)
+	{
+        printf("%lf, ", c->att[v]); 
+    } 
+	printf("%d)", c->lable);
 }
 
 void print_centroid(Point* cent, int k){
