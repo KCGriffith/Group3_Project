@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <float.h>
 
 typedef struct point{
     int id_num; 
@@ -30,7 +31,7 @@ typedef struct minimum{
 }Minimum;
 
 //point initializer
-struct point init_point(int id_num, int att[], int lable);
+struct point init_point(int id_num, double att[], int lable);
 
 //ensure unique elements are picked
 bool is_unique(int *past_pick, int pick, int n);
@@ -41,11 +42,8 @@ struct cluster init_cluster(struct point *D, int n);
 //Initialize minimum
 Minimum init_minimum(Point x, int a, int b, double dist);
 
-//kmeans algorithm...  I don't know if this is correct syntax but I'm just communicating a list of clusters is returned by this function.
+//kmeans algorithm...
 struct cluster* kmeans(Point* D, int n, int k);
-
-//Random Cluster function
-struct cluster* rand_Cluster(struct point *D, int n, int k);
 
 //print cluster
 void print_cluster(struct cluster *C, int k);
@@ -53,52 +51,90 @@ void print_cluster(struct cluster *C, int k);
 //print point support function for print_cluster
 void print_point(struct point *c);
 
+//Used to print centroids
 void print_centroid(Point* cent, int k);
 
 //Check to end kmean function.
 bool shouldHalt(struct point old_centroid[], struct point centroid[], int k);
+
+//Used to compare two points to one another.
 bool compare_points(struct point a, struct point b);
 
-//centroid function to calculate centroid 
-struct point get_centroid(struct point* c, int n);
+//centroid function to calculate centroid
+struct point get_centroid(struct point *c, int n);
 
+//Inner exrpession of distance formula
 double pointSummation(Point *A, Point *B);
 
+//Euclidian distance formula.
 double distanceCalculator(Point *A, Point *B);
 
-double sumCluster(Cluster* C, Point *cent);
+//Inner expreesion of partitioning method
+double sumCluster(Cluster* C, Point cent);
 
-double eCalculator(Cluster *C, Point *c, int k);
+//Formula to find E
+double eCalculator(Cluster *C, Point c[], int k);
 
+//Used to find points that are closer to other centroids
 struct minimum Minimum_find(Cluster* C, Point* cent, struct minimum min, int k, int currentClust);
 
+//Used to cycle through clusters while calling minimum find.
 struct minimum Minimize(Cluster* C, Point* cent, int k);
 
+//This assigns new points to clusters.
+Cluster* assign_points(Point p, Cluster* C, Point cent[], int k);
+
+//This edits clusters that went through the list of points D.
 Cluster* tightenCluster(Cluster* C, Point* cent, int k);
+
 //Function to reassign elements
 Cluster* point_reassignment(Cluster* C, Point chosen, int start, int target, int k);
+
+//Used to determine accuracy.
+double Accuracy(Cluster* C);
+
+//This is used to recieve input.
+struct point* read(FILE *inFile, Point* D, int *valid);
 
 int main(int argc, char *argv[])
 {
 	//For the time being ignore the fact C has to be initialized as a list.
 	//At least until the data structure is in place.
-	//int k, n = /*Input data's size*/;
-	//point D[n] = [initPoint(/*Input data*/)*n];
-	Cluster *result;
-	int n = 8, k = 3;
-	//
-	double x[8] = {2, 2, 8, 5, 7, 6, 1, 4};
-	double y[8] = {10, 5, 4, 8, 5, 4, 2, 9};
-	struct point *D = calloc(n, sizeof(Point));
+	FILE *inFile;
+	struct point *p = (Point*)calloc(699, sizeof(Point));
+	int valid = 699;
+	p = read(inFile, p, &valid);
+	Cluster* result = (Cluster*)calloc(2, sizeof(Cluster));
+	int k = 2;
 
-	for(int i = 0; i < n; i++){
-		*(D+i) = init_point(x[i], y[i]);
-	}
+	struct point *D = (Point*)calloc(valid, sizeof(Point));
+	bool val;
+	int count = 0;
 
+	for(int i = 0; i < valid; i++)
+    {
+        for(int l = 0; l < 9; l++)
+        {
+            if((p+count)->att[l] == 0)
+            {
+                val = false;
+                count++;
+                break;
+            }
+            else 
+            { 
+                val = true;
+            }
+        }
+        if(val)
+        {
+        	*(D+i) = init_point((p+count)->id_num, (p+count)->att, (p+count)->lable);
+        }
+    }
 
-	result = kmeans(D, n, k);
+	result = kmeans(D, valid, k);
 	
-	print_cluster(result, k);
+	printf("This clustering accuracy = %lf\n", Accuracy(result));
 
 	return 0;
 }
@@ -106,39 +142,83 @@ int main(int argc, char *argv[])
 struct cluster* kmeans(struct point* D, int n, int k){
 	time_t t;
 	srand((unsigned)time(&t));
+	int pick, last_picked[n];
+	double E = DBL_MAX, E_previous = DBL_MAX;
 	//Initializaition
-	struct cluster* C = rand_Cluster(D, n, k); //This creates the list of functions using the function I wrote.
-	
+	struct cluster* C = (Cluster*)calloc(k, sizeof(Cluster));
 	struct point centroid[k]; //This initializes the centroid list.
 
+	for(int z = 0; z < n; z++){
+		//An index cannot be negative so all of the 
+		//initial values for last_picked needs to be set to a negative value.
+		last_picked[z] = -1;
+	}
+
 	for(int i = 0; i < k; i++){
-		centroid[i] = get_centroid((C+i)->c, (C+i)->n);
+		//We are going to initially pick a random value.
+		pick = rand() % n;
+
+		while(is_unique(last_picked, pick, n) || (pick > n)) { pick = (rand()%n); } //If the index is not unique we take another random index until we find a unique 
+		//We want temp at m to take the value from D at pick.
+		centroid[i] = *(D+pick);
+		//We now add pick to the array of last picked.
+		last_picked[i] = pick;
+		*(C+i) = init_cluster(&centroid[i], 1);
 	}
 	
 	//Book Keeping
-	struct point old_centroids[k];
-
+	struct point old_centroids[k], temp_centroids[k];
+	int w = 0, o = 3;
 	while(!shouldHalt(old_centroids, centroid, k)){
+		Cluster* temp = (Cluster*)calloc(k, sizeof(Cluster));
+		//E_previous = E;
         for(int i = 0; i < k; i++){
             old_centroids[i] = centroid[i];
         }
 
-		//Reassign objects to the cluster.
+		while(is_unique(last_picked, w, n) && w < n) { w++; }
 
-		C = tightenCluster(C, centroid, k);
 
-		//Update the cluster means
+        //We need to know when all points have been assigned to a cluster.
+        if(w < n){	
+        	C = assign_points(D[w], C, centroid, k);
+        	
+        	last_picked[o] = w;
+        	w++;
+        	o++;
+        	for(int i = 0; i < k; i++){
+				centroid[i] = get_centroid((C+i)->c, (C+i)->n);
+			}
+			
+        } else { //If we have assigned the points we need to adjust the clusters.
+        	//Reassign objects to the cluster.
 
-		for(int i = 0; i < k; i++){
-			centroid[i] = get_centroid((C+i)->c, (C+i)->n);
+			for(int i = 0; i < k; i++){ //This allows us to see if we improve the cluster without causing change.
+				*(temp+i) = *(C+i);
+			}
+
+			temp = tightenCluster(temp, centroid, k);
+			
+			for(int i = 0; i < k; i++){
+				temp_centroids[i] = get_centroid((temp+i)->c, (temp+i)->n);
+			}
+			
+			E = eCalculator(temp, temp_centroids, k);
+			if(E < E_previous){  //If the score is improved then we change the main cluster
+				for(int i = 0; i < k; i++){
+					*(C+i) = *(temp+i);
+				}
+
+				for(int i = 0; i < k; i++){
+					centroid[i] = get_centroid((C+i)->c, (C+i)->n);
+				}
+
+			}//We are done otherwise.
+
+			free(temp);
 		}
-		printf("These are the centroids: ");
-		print_centroid(centroid, k);
-		printf(" == ");
-		print_centroid(old_centroids, k);
-		printf("?\n");
 	}
-	printf("I finished!!!!!!!\n");
+	print_centroid(centroid, k);
 	return C;
 }
 
@@ -162,88 +242,6 @@ struct cluster init_cluster(struct point *D, int n){
 //Initialize minimum
 Minimum init_minimum(Point x, int a, int b, double dist){
 	return (Minimum){x, a, b, dist};
-}
-
-//Random Cluster function
-struct cluster* rand_Cluster(struct point *D, int n, int k){
-	int hm = 0, lower = 1, whatleft, *last_picked = calloc(n, sizeof(n)), v = 0, pick;  //These are the integer values
-	struct cluster *clust = malloc(k * sizeof(Cluster)), tclust[k]; //These are the cluster variables
-	struct point *temp = calloc(n, sizeof(Point)); //these are the point variables
-
-	for(int z = 0; z < n; z++){  
-		//An index cannot be negative so all of the 
-		//initial values for last_picked needs to be set to a negative value.
-		*(last_picked+z) = -1;
-	}
-
-	//We need to know how many data points are left
-	//By the time we are ready to initialize the final cluster.
-	whatleft = n;
-	for(int l = 0; l < k; l++){
-
-		//Utilizing pointer arithmatic to make sure that 
-		//temp is not pointing at allocated memory that has a value.
-		temp += hm;
-
-		//hm = 0 when l = 0.
-		//When l != 0 then hm has some non zero value.
-		//We take the difference of whatsleft and hm
-		//Gives an accurate assement of how many 
-		//Data points are left.
-		whatleft = whatleft - hm;
-
-		//Upper is boundary value between indexes.
-		int upper = (n-1) - hm;
-
-		while(true){
-			//It stands that the expression upper > whatleft can't be true.
-			//I know the way I wrote it is weird but it made sense at the time.
-			//If the expression mentioned earlier is true then we need to decrement upper
-			//If we don't do this things go wrong understandably.
-			if(whatleft - upper <= 0){
-				upper -= 1;
-			} else {break;}
-		}
-
-		//If we are at the last cluster then we need
-		//To assign it with whatever data points are left
-		//Otherwise we take a random value.
-		if(l == k-1){
-			hm = whatleft;
-		} else {
-			hm = (rand() % (upper-lower+1))+lower;   //How many elements in the cluster
-		}
-
-		//Now we need to pick what data points
-		//Are assigned to the list of data points that
-		//Goes to the current cluster.
-		for(int m = 0; m < hm; m++){  
-
-			//We are going to initially pick a random value.
-			pick = rand() % n;
-
-			while(is_unique(last_picked, pick, n) || (pick > n)) { pick = (rand()%n); } //If the index is not unique we take another random index until we find a unique 
-			//We want temp at m to take the value from D at pick.
-			*(temp+m) = *(D+pick);
-			//We now add pick to the array of last picked.
-			*(last_picked+v) = pick;
-			v += 1;
-
-		}
-
-		//Now we initialize the cluster at l within the array.
-		tclust[l] = init_cluster(temp, hm);
-
-	}
-
-	//Here we are just pointing whats in the array into the dynamic array.
-	for(int i = 0; i < k; i++){
-		*(clust+i) = tclust[i];
-	}
-	//The reason I have two different types of array has to do with the trouble I was
-	//having with pointers.
-
-	return clust;
 }
 
 //ensure unique elements are picked
@@ -270,13 +268,13 @@ void print_cluster(struct cluster *C, int k){
 	}
 	printf("\n");
 }
+
 void print_point(struct point *c){
     printf("(%d ", c->id_num);
-    for(int v = 0; v < 9; v++)
-	{
-        printf("%lf, ", c->att[v]); 
-    } 
-	printf("%d)", c->lable);
+    for(int v = 0; v < 9; v++){
+        printf("%lf, ", c->att[v]);
+    }
+    printf("%d)", c->lable);
 }
 
 void print_centroid(Point* cent, int k){
@@ -309,7 +307,8 @@ bool compare_points(struct point a, struct point b){
         if (a.att[v] != b.att[v]){
             return false;
         }
-        return true; 
+	}
+	return true;
 }
 //centroid function to calculate centroid
 struct point get_centroid(struct point* c, int n){ 
@@ -354,38 +353,47 @@ double distanceCalculator(Point *A, Point *B){
     return sqrt(pointSummation(A, B));
 }
 
-double sumCluster(Cluster* C, Point *cent){ //cent is our centroid  
-    double total; //It is the value to be returned. 
-    for(int l = 0; l < C->n; l++){
-        total += pow(2, distanceCalculator((C+l)->c, cent));
+double sumCluster(Cluster* C, Point cent){ //cent is our centroid  
+    double total = pow(2, distanceCalculator(&C->c[0], &cent)); //It is the value to be returned. 
+    for(int l = 1; l < C->n; l++){
+        total += pow(2, distanceCalculator(&C->c[l], &cent));
     }
     return total;
 }
 
-double eCalculator(Cluster *C, Point *c, int k){ 
-    double Total; 
-    for(int i = 0; i < k; i++){
-        Total += sumCluster(C+i, c+i);
+double eCalculator(Cluster *C, Point c[], int k){ 
+    double Total;
+    Total = sumCluster(C, c[0]);
+    for(int i = 1; i < k; i++){
+        Total += sumCluster(C+i, c[i]);
     }
     return Total; 
 }
 
 struct minimum Minimum_find(Cluster* C, Point* cent, struct minimum min, int k, int currentClust){
-    double Candidate;
+    double BestPlace[k];
+    int loc;
+    //Check if the cluster has one element
     if(C->n > 1){
     	for(int g = 0; g < C->n; g++){
-        	for(int v = 0; v < k; v++){
-            	Candidate = distanceCalculator(&C->c[g], &cent[v]);
-            	if(min.ed < 0 && v != currentClust){
-                	min = init_minimum(C->c[g], currentClust, v, Candidate);
-            	}
-            	else if(min.ed > 0){
-            		if(min.ed > Candidate && v != currentClust){
+    		for(int i = 0; i < k; i++){ //This creates a table of distances that we can choose from.
+    			BestPlace[i] = distanceCalculator(&C->c[g], &cent[i]);
+    		}
+    		loc = 0;
+    		for(int i = 1; i < k; i++){ //This is when we find the locaition of the best candidate.
+    			if(BestPlace[i] < BestPlace[loc]){ loc = i; }
+    		}
+        	if(loc != currentClust){
+            	if(min.ed < 0){
+                	min = init_minimum(C->c[g], currentClust, loc, BestPlace[k]);
+            	} else if(min.ed >= 0){
+            		if(min.ed > BestPlace[k]){
                 		min.chosen = C->c[g];
                 		min.k_index = currentClust;
-                		min.k_target = v;
-                		min.ed = Candidate;
+                		min.k_target = loc;
+                		min.ed = BestPlace[loc];
             		}
+
             	}
         	}
     	}
@@ -395,19 +403,57 @@ struct minimum Minimum_find(Cluster* C, Point* cent, struct minimum min, int k, 
 }
 
 struct minimum Minimize(Cluster* C, Point* cent, int k){
-    struct minimum min = init_minimum((Point){0, 0}, 0, 0, -1);
+    struct minimum min;
+    struct minimum temp;
     for(int l = 0; l < k; l++){
-        min = Minimum_find(C+l, cent, min, k, l);
+    	temp = Minimum_find(C+l, cent, min, k, l);
+    	if(temp.ed > -1 && temp.ed < min.ed){
+    		min = temp;
+    	}
     }
     return min;
 }
 
+Cluster* assign_points(Point p, Cluster* C, Point cent[], int k){
+	double minimum = DBL_MAX;
+	int target;
+	Cluster clust[k];
+	for(int i = 0; i < k; i++){
+		double candidate = distanceCalculator(&p, &cent[i]);
+		if(candidate < minimum){
+			target = i;
+			minimum = candidate;
+		}
+	}
+	for(int i = 0; i < k; i++){
+		if(i != target){
+			clust[i] = init_cluster((C+i)->c, (C+i)->n);
+		} else {
+			int v = (C+i)->n + 1, lastindex = v-1;
+			Point* d = (Point*)calloc(v, sizeof(Point));
+			for(int l = 0; l < (C+i)->n; l++){
+				*(d+l) = (C+i)->c[l];
+			}
+			*(d+lastindex) = p;
+			clust[i] = init_cluster(d, v);
+		}
+	}
+	free(C);
+	C = (Cluster*)calloc(k, sizeof(Cluster));
+	for(int i = 0; i < k; i++){
+		*(C+i) = clust[i];
+	}
+	return C;
+}
+
 Cluster* tightenCluster(Cluster* C, Point* cent, int k){
     struct minimum min = Minimize(C, cent, k);
-    int k_index = min.k_index; 
-    int k_target = min.k_target;
-    C = point_reassignment(C, min.chosen, k_index, k_target, k);
-    return C;
+    if(min.ed > -1){
+    	int k_index = min.k_index;
+		int k_target = min.k_target;
+    	C = point_reassignment(C, min.chosen, k_index, k_target, k);
+    }
+	return C;
 }
 
 Cluster* point_reassignment(Cluster* C, Point chosen, int start, int target, int k){
@@ -416,13 +462,6 @@ Cluster* point_reassignment(Cluster* C, Point chosen, int start, int target, int
 
 	target_n = ((C+target)->n)+1;
 	start_n = ((C+start)->n)-1;
-
-	/*printf("Former_start = %d\nFormer_target = %d\n", (C+start)->n, (C+target)->n);
-	printf("start_n = %d\ntarget_n= %d\n", start_n, target_n);
-	printf("start index: %d\nTarget index: %d\n", start, target);
-	printf("Here is chosen:");
-	print_point(&chosen);
-	printf("\n");*/
 
 	for(int l = 0; l < k; l++){
 		if(l == target){
@@ -459,10 +498,88 @@ Cluster* point_reassignment(Cluster* C, Point chosen, int start, int target, int
 		}
 	}
 
+	
 	free(C);
 	C = (Cluster*)calloc(k, sizeof(Cluster));
 	for(int i = 0; i < k; i++){
 		*(C+i) = ctemp[i];
 	}
+
 	return C;
+}
+
+double Accuracy(Cluster* C){
+	double TP, FP, TN, FN;
+	TP = 0;
+	FP = 0;
+	TN = 0;
+	FN = 0;
+	for(int i = 0; i < C->n; i++){
+		if(C->c[i].lable == 4){
+			TP = TP + 1;
+		} else { //Then lable == 2
+			FP = FP + 1;
+		}
+	}
+	for(int i = 0; i < (C+1)->n; i++){
+		if(C->c[i].lable == 2){
+			FN = FN + 1;
+		} else { //then lable == 4
+			TN = TN + 1;
+		}
+	}
+
+	double ALL = C->n + (C+1)->n;
+	return (TP+TN)/ALL;
+}
+
+struct point* read(FILE *inFile, Point* D, int *valid)
+{
+    struct point list[699];
+    inFile = fopen("breast-cancer-wisconsin.data", "r");
+    char c = ' ';
+    while (c != EOF )
+    {
+        for (int i = 0; i < 699; i++)
+        {
+            fscanf(inFile, "%d", &list[i].id_num);
+            c = getc(inFile);
+            
+            for (int j = 0; j < 9; j++)
+            {
+                c = getc(inFile);
+                if (c == '?')
+                {
+                    list[i].att[j] = 0;
+                    c = getc(inFile);
+                    *valid = *valid - 1;
+                }
+                else
+                {
+                    ungetc(c, inFile);
+                    fscanf(inFile, "%lf", &list[i].att[j]);
+                    c = getc(inFile);
+                }
+            }
+            fscanf(inFile, "%d" , &list[i].lable);
+            c = getc(inFile);
+        }
+    }
+    /*
+    for (int i = 0; i < 699; i++)
+    {
+        printf(" %d ", list[i].id_num);
+        for (int j = 0; j < 9; j++)
+        {
+            printf("%.0lf ", list[i].att[j]);
+        }
+        printf("%d\n", list[i].lable);
+    }
+    */
+    for(int i = 0; i < 699; i++)
+    {
+        *(D+i) = list[i];
+    }
+    
+    return D;
 }
