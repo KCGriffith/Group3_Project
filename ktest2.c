@@ -286,18 +286,16 @@ void print_centroid(Point* cent, int k){
 }
 
 //Check to end kmean function.
-bool shouldHalt(struct point old_centroid[], struct point centroid[], int k){
-    int temp = 0;
-    for (int i = 0; i < k; i++){
-        if (compare_points(old_centroid[i], centroid[i])){
-            temp += 1;
+bool shouldHalt(struct point old_centroid[], struct point centroid[], int k)
+{
+    for (int i = 0; i < k; i++)
+    {
+        if (!compare_points(old_centroid[i], centroid[i]))
+        {
+            return false;
         }
-        else break;
     }
-    if (temp == k-1)
-        return true;
-    else
-        return false;
+    return true;
 }
 
 //Used to compare individual points
@@ -343,7 +341,7 @@ struct point get_centroid(struct point* c, int n){
 double pointSummation(Point *A, Point *B){
     double total;
     for(int v = 0; v < 9; v++){
-        double difference = (A->att[v]) - (B->att[v]);
+        double difference = fabs(A->att[v]) - (B->att[v]);
         total += pow(2, difference);
     }
     return total;
