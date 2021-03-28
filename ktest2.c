@@ -10,8 +10,8 @@
 
 typedef struct point{
     int id_num; 
-    double att[9];  //short for attributes. 
-    int lable; 
+    double att[9]; //short for attributes.
+    int lable;
 } Point;
 
 typedef struct cluster{
@@ -218,7 +218,7 @@ struct cluster* kmeans(struct point* D, int n, int k){
 			free(temp);
 		}
 	}
-	print_centroid(centroid, k);
+	print_centroid(&centroid, k);
 	return C;
 }
 
@@ -345,7 +345,7 @@ double pointSummation(Point *A, Point *B){
         total += pow(2, difference);
     }
     return total;
-} 
+}
 
 double distanceCalculator(Point *A, Point *B){
     return sqrt(pointSummation(A, B));

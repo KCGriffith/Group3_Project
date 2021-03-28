@@ -7,7 +7,7 @@ struct point
 };
 
 //centroid function to calculate centroid
-struct point centroid(struct point *c [], int n)
+struct point centroid(struct point *c, int n)
 {
     //centroid as a point
     struct point cen;
@@ -15,16 +15,16 @@ struct point centroid(struct point *c [], int n)
     //initialize centroid
     cen.x = 0, cen.y = 0;
 
-    for (int j = 0; j < n ; j++)
+    for (int j = 0; j < n; j++)
     {
-        cen.x += *(c[j].x);
-        cen.y += *(c[j].y);
+        cen.x += (c[j].x);
+        cen.y += (c[j].y);
     }
 
     //average of all the data points
     cen.x = cen.x / n;
     cen.y = cen.y / n;
-    
+
     //return centroid
     return cen;
 }
@@ -42,7 +42,7 @@ int main(void)
         scanf("%lf %lf", &c[i].x, &c[i].y);
     }
     struct point cen;
-    cen = centroid (c, size);
-    printf("The centroid of cluster is (%.2lf, %.2lf) \n" , cen.x, cen.y);
+    cen = centroid(c, size);
+    printf("The centroid of cluster is (%.2lf, %.2lf) \n", cen.x, cen.y);
     return 0;
 }
