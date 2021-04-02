@@ -17,7 +17,7 @@ typedef struct cluster{
 } Cluster;
 
 typedef struct minimum{
-    struct point chosen; 
+    Point chosen; 
     int k_index; //Keeps track of starting cluster. 
     int k_target; 
     double ed; //ed stands for Euclidean distance.
@@ -33,6 +33,9 @@ void print_centroid(Point* cent, int k);
 
 //print points
 void print_point(struct point *c);
+
+//print minimum
+void print_minimum(Minimum min);
 
 //THESE FUNCTIONS ARE USED FOR EXTRACTING DATA 
 
