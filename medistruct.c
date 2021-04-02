@@ -6,7 +6,7 @@
 #include <float.h>
 #include "medistruct.h"
 
-int MAX_VALUE = 5;
+int MAX_VALUE = 699;
 
 //THIS BLOCK OF FUNCTIONS HANDLES PRINTING DIFFERENT STRUCT TYPES
 
@@ -14,7 +14,7 @@ int MAX_VALUE = 5;
 void print_cluster(struct cluster *C, int k){
     //It turns out that all my problems stemed from this function.
     for(int i = 0; i < k; i++){
-        printf("cluster %d: ", i+1);
+        printf("Cluster %d:\n ", i+1);
         for(int l = 0; l < (C+i)->n; l++){
             print_point((C+i)->c+l);
         }
@@ -34,11 +34,20 @@ void print_centroid(Point* cent, int k){
 
 //print points
 void print_point(struct point *c){
-    printf("(%d, ", c->id_num);
+    printf("%d: (", c->id_num);
     for(int v = 0; v < 9; v++){
         printf("%lf, ", c->att[v]);
     }
-    printf("%d)", c->lable);
+    printf(") LABLE: %d\n", c->lable);
+}   
+
+//print minimum
+void print_minimum(Minimum min){
+    printf("I CHOSE THIS POINT AS THE MINIMUM: ");
+    print_point(&min.chosen);
+    printf("The chosen point is at cluster %d\n", min.k_index);
+    printf("The chosen point is being assigned to cluster %d\n", min.k_target);
+    printf("This is the score: %lf\n", min.ed);
 }
 
 //THESE FUNCTIONS ARE USED FOR EXTRACTING DATA
@@ -46,7 +55,8 @@ void print_point(struct point *c){
 struct point* read(FILE *inFile, Point* D, int *valid)
 {
     struct point list[MAX_VALUE];
-    inFile = fopen("test-data.data", "r");
+    //inFile = fopen("test-data.data", "r");
+    inFile = fopen("breast-cancer-wisconsin.data", "r");
     char c = ' ';
     while (c != EOF )
     {
@@ -75,17 +85,7 @@ struct point* read(FILE *inFile, Point* D, int *valid)
             c = getc(inFile);
         }
     }
-    /*
-    for (int i = 0; i < MAX_VALUE; i++)
-    {
-        printf(" %d ", list[i].id_num);
-        for (int j = 0; j < 9; j++)
-        {
-            printf("%.0lf ", list[i].att[j]);
-        }
-        printf("%d\n", list[i].lable);
-    }
-    */
+
     for(int i = 0; i < MAX_VALUE; i++)
     {
         *(D+i) = list[i];
@@ -108,8 +108,6 @@ struct point init_point(int id_num, double att[], int lable){
         temp.att[i] = (temp.att[i] - MIN)/(MAX - MIN);
     }
     temp.lable = lable;
-    print_point(&temp);
-    printf("\n");
     return temp;
 }
 
@@ -122,5 +120,7 @@ struct cluster init_cluster(struct point *D, int n){
 Minimum init_minimum(Point x, int a, int b, double dist){
     return (Minimum){x, a, b, dist};
 }
+
+
 
 
