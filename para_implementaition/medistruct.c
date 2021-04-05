@@ -122,5 +122,3 @@ Minimum init_minimum(Point x, int a, int b, double dist){
 }
 
 
-
-

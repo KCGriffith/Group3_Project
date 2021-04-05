@@ -220,14 +220,3 @@ bool compare_points(struct point a, struct point b){
 	}
 	return true;
 }
-
-//Used to compare individual points
-bool compare_points(struct point a, struct point b){
-    //Returns whether two points are equal.
-    for(int v = 0; v < 9; v++){
-        if (a.att[v] != b.att[v]){
-            return false;
-        }
-	}
-	return true;
-}
